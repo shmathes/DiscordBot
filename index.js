@@ -47,3 +47,32 @@ client.on('message', async (msg) => {
         }
     }
 });
+
+client.on('typingStart', async (typing) => {
+    const channelId = typing.id;
+    const channel = await client.channels.fetch(channelId);
+    let userName;
+
+    // typing._typing.forEach((t) => {
+    //     console.log(t.user.username);
+    // })
+
+    //Need to clean this up to pull user name
+    for(let entry of typing._typing.entries()){
+        const userId = entry[0];
+        const user = await client.users.cache.get(userId);
+        userName = user.username;
+    }
+    channel.send(`:shushing_face: QUIET! ${userName} has something very important to say.`);
+
+})
+
+client.on('presenceUpdate', (oldPresence, newPresence) => {
+    console.log(oldPresence);
+    console.log(newPresence);
+});
+
+client.on('userUpdate', (oldUser, newUser) => {
+    console.log(oldUser);
+    console.log(newUser);
+});
