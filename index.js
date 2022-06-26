@@ -4,6 +4,8 @@ const client = new Discord.Client();
 import fetch from 'node-fetch';
 //require('dotenv').config();
 import dotenv from 'dotenv';
+import {getGreetings, addGreeting} from './helpers/data.js'
+import {sanitizeString, cleanString} from './helpers/helperFunctions.js';
 
 dotenv.config();
 
@@ -14,38 +16,34 @@ client.on('ready', () => {
 });
 
 client.on('message', async (msg) => {
-    //if(msg.content === 'hi') 
-    const greetings = getGreetings();
-    const sanitizedString = sanitizeString(msg.content);
-    console.log(sanitizedString);
-    if(sanitizedString.split(' ').some(r => greetings.includes(r)))
+    if(msg.content.startsWith('!add'))
     {
-        const url = `https://g.tenor.com/v1/search?q=${getGreetings()[Math.floor(Math.random() * getGreetings().length)]}&key=${process.env.TENOR_API_KEY}&limit=100`;
+        addGreeting(cleanString(msg.content, '!add'));
+        msg.reply(`Added ${msg.content} to greetings list`);
+        console.log(getGreetings());
+    } else if(msg.content.startsWith('!list')){
+        msg.reply(`List of greetings... \n ${getGreetings()}`);
+    }else{
+        const greetings = getGreetings();
+        const sanitizedString = sanitizeString(msg.content);
+        const filteredWords = sanitizedString.split(' ').filter((val) => {
+            return greetings.includes(val);
+        });
 
-        const response = await fetch(url);
-        //console.log(response);
+        if(filteredWords.length > 0)
+        {
+            console.log(filteredWords[0]);
+            const url = `https://g.tenor.com/v1/search?q=${filteredWords[0]}&key=${process.env.TENOR_API_KEY}&limit=100`;
 
-        const result = await response.json();
-        //console.log(result);
+            const response = await fetch(url);
+            //console.log(response);
 
-        const index = Math.floor(Math.random() * result.results.length);
+            const result = await response.json();
+            //console.log(result);
 
-        msg.reply(result.results[index].url);
+            const index = Math.floor(Math.random() * result.results.length);
+
+            msg.reply(result.results[index].url);
+        }
     }
-})
-
-const getGreetings = () => {
-    const greetings = [
-        'hey',
-        'hi',
-        'yo', 
-        'sup',
-        'hello'
-    ]
-
-    return greetings;
-}
-
-const sanitizeString = (str) => {
-    return str.toLowerCase().replace(',', '').replace('.', '')
-}
+});
